@@ -1,9 +1,13 @@
 .DS_Store
 node_modules/
 .env
+.env.local
 *.log
 AGENTS.md
+
+# Python
 .venv/
 codebase/.venv/
 __pycache__/
 **/__pycache__/
+*.pyc

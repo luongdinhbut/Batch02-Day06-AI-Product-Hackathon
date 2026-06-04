@@ -1,93 +1,114 @@
 import os
+import sys
 import unittest
 from pathlib import Path
-
-from itinerary import (
-    apply_correction,
-    build_fallback_itinerary,
-    build_llm_prompt,
-    build_preferences,
-    call_gemini,
-    day_name,
-    is_closed,
-    load_data,
-)
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 
 
-class ItineraryTests(unittest.TestCase):
+from core.schemas import (  # noqa: E402
+    Budget,
+    ExperienceStyle,
+    FoodStyle,
+    PlaceType,
+    UserPreference,
+)
+from services.data_loader import load_hanoi_data  # noqa: E402
+
+
+def complete_preference(**overrides):
+    data = {
+        "food_style": FoodStyle.street_food,
+        "place_type": PlaceType.culture_history,
+        "experience": ExperienceStyle.local,
+        "nightlife": False,
+        "budget": Budget.low,
+        "arrival_day_of_week": "Monday",
+        "arrival_date_str": "2026-06-08",
+    }
+    data.update(overrides)
+    return UserPreference(**data)
+
+
+class BrokenEngine:
+    def refresh(self):
+        pass
+
+    def send_raw(self, message):
+        raise RuntimeError("provider down")
+
+
+class ItineraryServiceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data = load_data(ROOT / "data" / "hanoi_places.json")
-        cls.prefs = build_preferences({
-            "food_style": "Street food",
-            "sightseeing": "Culture/history",
-            "local_style": "Local",
-            "budget": "Under 500k",
-            "travel_date": "2026-06-08",
-            "nightlife": True,
-        })
+        cls.data = load_hanoi_data()
 
-    def test_day_name(self):
-        self.assertEqual(day_name("2026-06-08"), "Monday")
+    def test_provider_config_defaults_to_fireworks(self):
+        import core.llm as llm
 
-    def test_closed_place_detection(self):
-        van_mieu = self.data["places"][0]
-        self.assertTrue(is_closed(van_mieu, "Monday"))
+        with patch.dict(os.environ, {"FIREWORKS_API_KEY": "fw-key"}, clear=True):
+            config = llm.get_llm_config()
 
-    def test_itinerary_warns_and_avoids_monday_closed_places(self):
-        itinerary = build_fallback_itinerary(self.data, self.prefs)
-        names = [item["name"] for block in itinerary["blocks"] for item in block["items"]]
+        self.assertEqual(config.provider, "fireworks")
+        self.assertIn("fireworks.ai", config.url)
+        self.assertEqual(config.api_key, "fw-key")
+
+    def test_provider_config_supports_custom_base_url(self):
+        import core.llm as llm
+
+        env = {
+            "LLM_PROVIDER": "custom",
+            "CUSTOM_API_KEY": "custom-key",
+            "CUSTOM_BASE_URL": "https://example.test/v1",
+            "CUSTOM_MODEL": "demo-model",
+        }
+        with patch.dict(os.environ, env, clear=True):
+            config = llm.get_llm_config()
+
+        self.assertEqual(config.provider, "custom")
+        self.assertEqual(config.url, "https://example.test/v1/chat/completions")
+        self.assertEqual(config.model, "demo-model")
+
+    def test_agent_uses_fallback_when_llm_fails(self):
+        from agent.itinerary_agent import generate_itinerary_from_preference
+
+        result = generate_itinerary_from_preference(
+            self.data,
+            complete_preference(),
+            BrokenEngine(),
+        )
+
+        self.assertEqual(result["mode"], "fallback")
+        self.assertIn("AI provider is unavailable", result["rendered_itinerary"])
+        self.assertTrue(result["itinerary"]["blocks"])
+
+    def test_fallback_avoids_closed_places_on_travel_day(self):
+        from services.fallback_builder import build_fallback_itinerary
+        from services.preference_mapper import to_fallback_planner_preferences
+
+        preference = complete_preference(arrival_day_of_week="Monday")
+        itinerary = build_fallback_itinerary(
+            self.data,
+            to_fallback_planner_preferences(preference),
+        )
+        names = {
+            item["name"]
+            for block in itinerary["blocks"]
+            for item in block["items"]
+        }
+        monday_closed = {
+            place["name"]
+            for place in self.data["places"]
+            if "Monday" in place.get("closed_on", [])
+        }
+
         self.assertTrue(itinerary["warnings"])
-        self.assertNotIn(self.data["places"][0]["name"], names)
-
-    def test_remove_bar_correction(self):
-        itinerary = build_fallback_itinerary(self.data, self.prefs)
-        updated = apply_correction(self.data, self.prefs, itinerary, "remove bar")
-        self.assertNotIn("Evening", [b["name"] for b in updated["blocks"]])
-
-    def test_add_cafe_correction(self):
-        itinerary = build_fallback_itinerary(self.data, self.prefs)
-        updated = apply_correction(self.data, self.prefs, itinerary, "add a cafe")
-        self.assertIn("Cafe break", [b["name"] for b in updated["blocks"]])
-
-    def test_change_district_correction(self):
-        itinerary = build_fallback_itinerary(self.data, self.prefs)
-        updated = apply_correction(self.data, self.prefs, itinerary, "change to Tay Ho")
-        districts = [item.get("district") for b in updated["blocks"][:3] for item in b["items"]]
-        self.assertTrue(any(d in {"Tây Hồ", "TÃ¢y Há»“"} for d in districts))
-
-    def test_make_cheaper_correction(self):
-        expensive = dict(self.prefs)
-        expensive["budget"] = "Over 1tr"
-        itinerary = build_fallback_itinerary(self.data, expensive)
-        updated = apply_correction(self.data, expensive, itinerary, "make it cheaper")
-        self.assertEqual(updated["preferences"]["budget"], "Under 500k")
-
-    def test_llm_prompt_uses_local_guardrail_itinerary(self):
-        itinerary = build_fallback_itinerary(self.data, self.prefs)
-        prompt = build_llm_prompt(self.data, self.prefs, itinerary)
-        self.assertIn("Guardrail itinerary", prompt)
-        self.assertIn("Street food", prompt)
-
-    def test_llm_missing_keys_returns_local_fallback_note(self):
-        old_env = {k: os.environ.get(k) for k in ["GEMINI_API_KEY", "GOOGLE_API_KEY", "CUSTOM_API_KEY", "CUSTOM_API_BASE_URL", "LLM_PROVIDER"]}
-        try:
-            for key in old_env:
-                os.environ.pop(key, None)
-            os.environ["LLM_PROVIDER"] = "google,custom"
-            itinerary = build_fallback_itinerary(self.data, self.prefs)
-            text, note = call_gemini(self.data, self.prefs, itinerary)
-            self.assertEqual(text, "")
-            self.assertIn("LLM unavailable", note)
-        finally:
-            for key, value in old_env.items():
-                if value is None:
-                    os.environ.pop(key, None)
-                else:
-                    os.environ[key] = value
+        self.assertTrue(names.isdisjoint(monday_closed))
 
 
 if __name__ == "__main__":

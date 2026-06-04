@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from core.llm import build_model_with_system
+from core.llm import call_llm
 from core.schemas import ChatMessage, SessionState
 from services.prompt_builder import build_system_instruction
 
@@ -8,36 +8,41 @@ from services.prompt_builder import build_system_instruction
 class ChatEngine:
     def __init__(self, state: SessionState) -> None:
         self._state = state
-        self._chat = None
-
-    def _ensure_chat(self) -> None:
-        system_instruction = build_system_instruction(self._state.preference)
-        model = build_model_with_system(system_instruction)
-        history = [
-            {"role": msg.role, "parts": [msg.content]}
-            for msg in self._state.chat_history
-        ]
-        self._chat = model.start_chat(history=history)
+        self._system_instruction = ""
+        self.last_note = ""
 
     def refresh(self) -> None:
-        """Gọi sau khi preference thay đổi để rebuild system_instruction."""
-        self._chat = None
+        """Rebuild system instruction after preferences change."""
+        self._system_instruction = ""
+
+    def _ensure_system_instruction(self) -> None:
+        if not self._system_instruction:
+            self._system_instruction = build_system_instruction(self._state.preference)
+
+    def _messages(self, new_user_message: str) -> list[dict[str, str]]:
+        self._ensure_system_instruction()
+        messages = [{"role": "system", "content": self._system_instruction}]
+        for msg in self._state.chat_history:
+            if msg.role in {"user", "model", "assistant"}:
+                role = "assistant" if msg.role in {"model", "assistant"} else "user"
+                messages.append({"role": role, "content": msg.content})
+        messages.append({"role": "user", "content": new_user_message})
+        return messages
+
+    def _send(self, user_message: str, save_user_message: bool) -> str:
+        reply, note = call_llm(self._messages(user_message))
+        self.last_note = note
+        if not reply:
+            raise RuntimeError(note)
+
+        if save_user_message:
+            self._state.chat_history.append(ChatMessage(role="user", content=user_message))
+        self._state.chat_history.append(ChatMessage(role="model", content=reply))
+        return reply
 
     def send(self, user_message: str) -> str:
-        if self._chat is None:
-            self._ensure_chat()
-        self._state.chat_history.append(ChatMessage(role="user", content=user_message))
-        response = self._chat.send_message(user_message)
-        reply = response.text.strip()
-        self._state.chat_history.append(ChatMessage(role="model", content=reply))
-        return reply
+        return self._send(user_message, save_user_message=True)
 
     def send_raw(self, message: str) -> str:
-        """Gửi message trigger generate (không hiển thị trong UI chat)."""
-        if self._chat is None:
-            self._ensure_chat()
-        response = self._chat.send_message(message)
-        reply = response.text.strip()
-        self._state.chat_history.append(ChatMessage(role="user", content=message))
-        self._state.chat_history.append(ChatMessage(role="model", content=reply))
-        return reply
+        """Send hidden generation trigger without rendering it as a normal user turn."""
+        return self._send(message, save_user_message=True)
