@@ -1,6 +1,6 @@
 # SPEC Day 06
 
-> Nhóm: 4
+> Nhóm: 5
 > Thành viên: Nguyễn Hải An · Lương Đình Bút · Đoàn Thị Thu Linh · Nguyễn Duy Đức · Lê Văn Quang
 > Ngày: Day 06
 
@@ -150,8 +150,8 @@ Check ngày đến ──► Có địa điểm đóng cửa?
 | Path | Prototype phải thể hiện |
 |---|---|
 | **Happy Path** | User trả lời 5 câu rõ ràng → AI trả lịch trình 1 ngày đầy đủ: 5–7 địa điểm tham quan + 2–3 quán ăn gần đó + 1 bar/pub buổi tối, có khung giờ, giá, rating → User hài lòng, copy lịch trình |
-| **AI Uncertain** | User trả lời mơ hồ ("tôi ăn được hết", "cái gì cũng thích") → AI hỏi thêm 1 câu cụ thể ("Nếu chỉ có 3 tiếng buổi sáng, bạn chọn đi chùa hay ngồi cafe?") hoặc trả lịch trình balanced với disclaimer "ℹ️ Dựa trên sở thích phổ biến nhất" |
-| **AI Wrong** | User nhập ngày thứ 2 → AI detect Văn Miếu, Bảo tàng Lịch sử, Hoàng Thành... đóng cửa → cảnh báo "⚠️ Văn Miếu đóng cửa thứ 2 — đề xuất thay thế: Nhà tù Hỏa Lò (cùng quận, mở thứ 2)" + tự động điều chỉnh lịch trình |
+| **AI Uncertain** | User trả lời mơ hồ ("tôi ăn được hết", "cái gì cũng thích") → AI hỏi thêm 1 câu cụ thể ("Nếu chỉ có 3 tiếng buổi sáng, bạn chọn đi chùa hay ngồi cafe?") hoặc trả lịch trình balanced với disclaimer " Dựa trên sở thích phổ biến nhất" |
+| **AI Wrong** | User nhập ngày thứ 2 → AI detect Văn Miếu, Bảo tàng Lịch sử, Hoàng Thành... đóng cửa → cảnh báo " Văn Miếu đóng cửa thứ 2 — đề xuất thay thế: Nhà tù Hỏa Lò (cùng quận, mở thứ 2)" + tự động điều chỉnh lịch trình |
 | **User Correction** | User muốn chỉnh: "thêm quán cafe buổi chiều", "bỏ bar", "đổi sang khu Tây Hồ" → AI update lịch trình theo yêu cầu mà KHÔNG hỏi lại 5 câu từ đầu, giữ nguyên context |
 
 ---
@@ -220,11 +220,11 @@ Check ngày đến ──► Có địa điểm đóng cửa?
 
 | Thành viên | Vai trò | Việc phụ trách | Bằng chứng cần có |
 |---|---|---|---|
-| Nguyễn Hải An | Research Lead | Chuẩn bị + validate seed data 179 records (55 places + 71 restaurants + 53 bars), đảm bảo data chính xác | `hanoi_places.json` đầy đủ, validate giờ mở cửa + district mapping |
-| Lương Đình Bút | SPEC + Prompt | Viết system prompt cho Gemini, thiết kế 5 câu hỏi chatbot, viết final SPEC | `prompts/system_prompt.md`, `spec.md` hoàn chỉnh |
-| Đoàn Thị Thu Linh | Prototype Dev | Build chatbot Streamlit, tích hợp Gemini API, kết nối data JSON, render lịch trình | `/app/` — chạy được locally, có UI hỏi 5 câu và trả lịch trình |
-| Nguyễn Duy Đức | Test + Failure | Viết test cases, code failure detection logic (check thứ + closed_on), kiểm thử 4 paths | `tests/test_cases.md` — ít nhất 6 test cases |
-| Lê Văn Quang | Demo + Repo | Viết demo script 3–5 phút, chuẩn bị repo đúng cấu trúc, README hướng dẫn chạy | `README.md`, demo script, repo chuẩn |
+| Nguyễn Hải An | Data + Frontend | Chuẩn bị/kiểm tra dataset, hỗ trợ mapping dữ liệu và build giao diện Next.js kết nối FastAPI | `codebase/data/hanoi_places.json`, `codebase/frontend/src/app/page.tsx`, `codebase/frontend/src/app/globals.css` |
+| Lương Đình Bút | SPEC + Prompt + MVP | Cải thiện system prompt, chuẩn bị data và hoàn thành MVP có AI call thật với Fireworks/DeepSeek | `spec.md`, `codebase/src/services/prompt_builder.py`, `codebase/data/hanoi_places.json` |
+| Đoàn Thị Thu Linh | Prompt + Prototype UX | Thiết kế system prompt ban đầu và prototype UX theo hướng chat-driven để dẫn user qua 5 câu hỏi | `codebase/src/app.py`, `codebase/src/services/onboarding.py`, `codebase/src/services/prompt_builder.py`, `codebase/src/core/llm.py` |
+| Nguyễn Duy Đức | Prototype + AI Safety + Docs | Dựng mockup prototype ban đầu, thêm LLM provider switcher, fallback itinerary, validator, slide/demo material và README | `codebase/src/core/llm.py`, `codebase/src/agent/itinerary_agent.py`, `codebase/src/services/fallback_builder.py`, `codebase/src/services/itinerary_validator.py`, `README.md` |
+| Lê Văn Quang | Test + Failure | Viết test cases, code failure detection logic (check thứ + closed_on), kiểm thử 4 paths | `codebase/tests/test_cases.md` — ít nhất 6 test cases |
 
 ---
 
