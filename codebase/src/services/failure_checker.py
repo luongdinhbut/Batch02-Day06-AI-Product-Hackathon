@@ -39,11 +39,11 @@ def build_closure_warning(day_of_week: str) -> str:
         return ""
 
     vn_day = to_vn_day(day_of_week)
-    lines = [f"⚠️ CẢNH BÁO: Các địa điểm sau đóng cửa vào {vn_day}:"]
+    lines = [f"CẢNH BÁO: Các địa điểm sau đóng cửa vào {vn_day}:"]
     for place in closed:
         alts = find_alternatives(place, day_of_week)
         alt_names = " / ".join(a["name"] for a in alts) if alts else "không có thay thế cùng loại"
-        lines.append(f"  - {place['name']} ({place['district']}) → Thay thế: {alt_names}")
+        lines.append(f"  - {place['name']} ({place['district']}) - Thay thế: {alt_names}")
     lines.append(
         "Hãy LOẠI BỎ các địa điểm trên khỏi lịch trình và chỉ gợi ý những địa điểm thay thế đã liệt kê."
     )

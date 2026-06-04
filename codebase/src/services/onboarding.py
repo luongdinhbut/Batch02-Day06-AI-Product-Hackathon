@@ -18,7 +18,7 @@ def _is_ambiguous(text: str) -> bool:
 
 
 GREETING = (
-    "Xin chào! Mình là **HaNoi Guide** 🗺️\n\n"
+    "Xin chào! Mình là **HaNoi Guide**\n\n"
     "Mình sẽ tạo lịch trình Hà Nội cá nhân hóa cho bạn trong vài phút — "
     "đầy đủ tham quan + ăn uống + nightlife theo đúng sở thích của bạn.\n\n"
     "Mình sẽ hỏi bạn **5 câu nhanh** để hiểu bạn muốn gì nhé!"
@@ -125,7 +125,7 @@ def process_answer(preference: UserPreference, user_text: str) -> tuple[UserPref
         parsed = parse_food_style(user_text)
         if parsed is None or ambiguous:
             return preference, (
-                "Mình chưa hiểu rõ lắm 😅 Bạn thích kiểu nào hơn — "
+                "Mình chưa hiểu rõ lắm. Bạn thích kiểu nào hơn — "
                 "**ăn vỉa hè bình dân** hay **ngồi nhà hàng có menu**?"
             )
         preference = preference.model_copy(update={
@@ -176,8 +176,8 @@ def process_answer(preference: UserPreference, user_text: str) -> tuple[UserPref
         num_days = parse_num_days(user_text)
         if day_of_week is None:
             return preference, (
-                "Mình chưa nhận ra ngày bạn đến 😅 "
-                "Bạn ghi rõ hơn được không? Ví dụ: **thứ 4, 11/06** hoặc **thứ 2 ngày 9/6** 📅"
+                "Mình chưa nhận ra ngày bạn đến. "
+                "Bạn ghi rõ hơn được không? Ví dụ: **thứ 4, 11/06** hoặc **thứ 2 ngày 9/6**"
             )
         preference = preference.model_copy(update={
             "arrival_date_str": user_text,
