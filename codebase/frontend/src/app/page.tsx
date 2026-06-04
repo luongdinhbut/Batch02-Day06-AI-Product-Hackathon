@@ -101,9 +101,9 @@ function markdownToHtml(text: string): string {
   for (const line of lines) {
     const stripped = line.trim();
     if (stripped.startsWith("•") || stripped.startsWith("- ") || stripped.startsWith("* ")) {
-      let contentPart = stripped.substring(1).strip();
+      let contentPart = stripped.substring(1).trim();
       if (stripped.startsWith("- ") || stripped.startsWith("* ")) {
-        contentPart = stripped.substring(2).strip();
+        contentPart = stripped.substring(2).trim();
       }
       
       if (!inList) {
@@ -135,13 +135,6 @@ function markdownToHtml(text: string): string {
   html = html.replace(/<ul><br>/g, "<ul>");
   
   return html;
-}
-
-// polyfill string.strip() just in case
-if (!(String.prototype as any).strip) {
-  (String.prototype as any).strip = function() {
-    return this.trim();
-  };
 }
 
 export default function Home() {
