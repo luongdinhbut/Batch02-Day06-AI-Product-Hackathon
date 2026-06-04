@@ -45,11 +45,30 @@ def parse_day_of_week(text: str) -> str | None:
 
 def parse_num_days(text: str) -> int:
     normalized = text.lower()
+    # Check for explicit "X ngày" pattern
     match = re.search(r"(\d+)\s*ngày", normalized)
     if match:
         return max(1, min(int(match.group(1)), 7))
+    # Check for "hai ngày"
     if "hai ngày" in normalized or "2 ngày" in normalized:
         return 2
+    # Map thứ X to X days (thứ 4 → 4 days, etc.)
+    vn_days = ["thứ 2", "thu 2", "thứ ba", "thu ba", "thứ 3", "thu 3",
+               "thứ tư", "thu tu", "thứ 4", "thu 4",
+               "thứ năm", "thu nam", "thứ 5", "thu 5",
+               "thứ sáu", "thu sau", "thứ 6", "thu 6",
+               "thứ bảy", "thu bay", "thứ 7", "chu nhat", "chủ nhật"]
+    day_number_map = {
+        "thứ 2": 2, "thu 2": 2, "thứ ba": 2, "thu ba": 2, "thứ 3": 3, "thu 3": 3,
+        "thứ tư": 4, "thu tu": 4, "thứ 4": 4, "thu 4": 4,
+        "thứ năm": 5, "thu nam": 5, "thứ 5": 5, "thu 5": 5,
+        "thứ sáu": 6, "thu sau": 6, "thứ 6": 6, "thu 6": 6,
+        "thứ bảy": 7, "thu bay": 7, "thứ 7": 7,
+        "chu nhat": 1, "chủ nhật": 1
+    }
+    for vn_day, num_days in day_number_map.items():
+        if vn_day in normalized:
+            return min(num_days, 7)
     return 1
 
 

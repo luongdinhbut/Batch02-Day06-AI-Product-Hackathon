@@ -28,6 +28,7 @@ def budget_limit(prefs):
     return 600000
 
 
+# Chấm điểm điểm tham quan theo sở thích để fallback vẫn cá nhân hóa.
 def score_place(place, prefs):
     text = " ".join(
         str(place.get(k, "")) for k in ["category", "vibe", "district", "area", "description"]
@@ -42,6 +43,7 @@ def score_place(place, prefs):
     return score
 
 
+# Chấm điểm quán ăn/bar theo khẩu vị, khu vực và ngân sách.
 def score_food(item, prefs, district=None):
     text = " ".join(str(item.get(k, "")) for k in ["category", "popular_dish", "name", "district"]).lower()
     score = float(item.get("rating", 0))
@@ -89,13 +91,14 @@ def estimate_budget(blocks):
     return f"{mins:,}-{maxs:,} VND".replace(",", ".")
 
 
+# Fallback chính: chọn nơi đang mở, cảnh báo nơi đóng cửa và dựng lịch 1 ngày.
 def build_fallback_itinerary(data, prefs):
     day = day_name(prefs["travel_date"])
     places = sorted(data["places"], key=lambda place: score_place(place, prefs), reverse=True)
     warnings = []
     selected_places = []
 
-    # Guardrail: expose closure risk while selecting only open places.
+    # Guardrail: báo nơi đóng cửa nhưng chỉ đưa nơi đang mở vào lịch.
     for place in places:
         if len(warnings) >= 3:
             break

@@ -35,6 +35,7 @@ def _render_fallback_itinerary(itinerary: dict, safety_warnings: list[str], note
     return "\n".join(lines)
 
 
+# Fallback: trả về cùng format với AI để UI không cần xử lý riêng khi AI lỗi.
 def _build_fallback_result(
     data: dict,
     preference: UserPreference,
@@ -59,6 +60,7 @@ def _send_ai_request(engine: ChatEngine, message: str) -> str:
     return engine.send_raw(message)
 
 
+# Luồng chính: gọi AI, validate, retry một lần rồi fallback nếu kết quả vẫn không an toàn.
 def generate_itinerary_from_preference(
     data: dict,
     preference: UserPreference,

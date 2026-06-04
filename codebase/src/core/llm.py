@@ -51,6 +51,7 @@ def _required_env(name: str) -> str:
     return value
 
 
+# LLM switcher: dựng cấu hình đúng cho provider đang chọn từ env.
 def get_llm_config(provider: str | None = None) -> LLMConfig:
     selected = _provider_name(provider)
 
@@ -106,6 +107,7 @@ def get_fireworks_config() -> dict[str, Any]:
     return {"url": config.url, "headers": config.headers, "model": config.model}
 
 
+# Cho phép demo cấu hình nhiều provider theo thứ tự ưu tiên, ví dụ fireworks,gemini.
 def _provider_order() -> list[str]:
     raw = os.getenv("LLM_PROVIDER", "fireworks")
     names = []
@@ -140,6 +142,7 @@ def _extract_gemini(payload: dict[str, Any]) -> str:
     return _normalize_content(payload["candidates"][0]["content"]["parts"])
 
 
+# Chuẩn hóa cách gọi provider: Gemini dùng prompt text, Fireworks/custom dùng chat completions.
 def _call_provider(config: LLMConfig, messages: list[dict[str, str]]) -> str:
     temperature = float(os.getenv("LLM_TEMPERATURE", "0.6"))
 
@@ -183,6 +186,7 @@ def _call_provider(config: LLMConfig, messages: list[dict[str, str]]) -> str:
     return _extract_chat_completion(response.json())
 
 
+# Thử lần lượt từng provider; lỗi được gom lại để app fallback thay vì crash.
 def call_llm(messages: list[dict[str, str]]) -> tuple[str, str]:
     errors: list[str] = []
 

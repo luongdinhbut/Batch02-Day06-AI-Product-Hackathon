@@ -296,6 +296,21 @@ export default function Home() {
         
         <div className="divider"></div>
         
+        {/* Weather Display */}
+        <div style={{ padding: "12px 16px", backgroundColor: "#f0f9ff", borderRadius: "8px", marginBottom: "16px" }}>
+          <h4 style={{ margin: "0 0 8px 0", fontSize: "13px", color: "#0369a1", fontWeight: 600 }}>Thời tiết Hà Nội hôm nay</h4>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "28px" }}>☀️</span>
+            <div>
+              <div style={{ fontSize: "16px", fontWeight: 600, color: "#1e293b" }}>28°C</div>
+              <div style={{ fontSize: "12px", color: "#64748b" }}>Nắng, ẩm độ 65%</div>
+            </div>
+          </div>
+          <div style={{ marginTop: "8px", fontSize: "12px", color: "#64748b" }}>
+            💧 Khả năng mưa: 20%
+          </div>
+        </div>
+        
         <h4 className="sidebar-section-title">Sở thích của bạn</h4>
         <div className="pref-cards-container">
           <div className={`pref-card ${isPrefDone("food_style") ? "done" : "pending"}`}>
@@ -360,7 +375,10 @@ export default function Home() {
       {/* Main chat area (Right) */}
       <main className="chat-area">
         <header className="chat-header">
-          <h1 className="chat-header-title">HaNoi Guide</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <img src="/robot.jpg" alt="HaNoi Guide" style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} />
+            <h1 className="chat-header-title">HaNoi Guide</h1>
+          </div>
           <p className="chat-header-subtitle">
             Chatbot AI tạo lịch trình du lịch Hà Nội cá nhân hóa — tham quan + ăn uống + nightlife
           </p>
@@ -393,8 +411,12 @@ export default function Home() {
           })}
           
           {loading && (
-            <div className="loading-row">
-              <div className="dot-pulse"></div>
+            <div className="chat-msg-row assistant">
+              <div className="avatar assistant">H</div>
+              <div className="bubble" style={{ display: "flex", alignItems: "center", gap: "8px", backgroundColor: "#f1f5f9" }}>
+                <div className="dot-pulse" style={{ width: "8px", height: "8px", margin: 0 }}></div>
+                <span style={{ color: "#64748b", fontStyle: "italic" }}>Bot đang suy nghĩ... chờ nhé 💭</span>
+              </div>
             </div>
           )}
           

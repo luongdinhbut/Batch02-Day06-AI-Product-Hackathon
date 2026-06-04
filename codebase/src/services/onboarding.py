@@ -100,8 +100,14 @@ def parse_budget(text: str) -> Budget | None:
     numbers = re.findall(r"(\d+)", t.replace(".", "").replace(",", ""))
     for n in numbers:
         amount = int(n)
-        if amount < 1000:
-            amount *= 1000  # "300" → 300k
+        # Check for unit keywords to determine multiplier
+        if "triệu" in t or "tr" in t:
+            amount *= 1000000  # "10 triệu" → 10,000,000
+        elif "k" in t:
+            amount *= 1000  # "300k" → 300,000
+        elif amount < 1000:
+            amount *= 1000  # "300" → 300,000
+        
         if amount < 500000:
             return Budget.low
         if amount <= 1000000:

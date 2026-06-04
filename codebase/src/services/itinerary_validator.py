@@ -165,11 +165,12 @@ def _build_feedback(issues: list[ValidationIssue]) -> str:
     return "\n".join(lines)
 
 
+# Cho phép AI rút gọn tên trong dataset mà vẫn được tính là đúng địa điểm.
 def _matches_known_name(name: str, known_names: set[str]) -> bool:
     normalized_name = _normalize(name)
     if normalized_name in known_names:
         return True
-    # The AI often shortens a dataset item, e.g. "Bà Nga" for "Bà Nga - Bún Mọc Cổ Truyền".
+    # AI thường rút gọn tên, ví dụ "Bà Nga" thay cho tên đầy đủ trong dataset.
     return len(normalized_name) >= 6 and any(
         normalized_name in known_name or known_name in normalized_name
         for known_name in known_names
@@ -196,6 +197,7 @@ def _find_known_item(name: str, items: list[dict]) -> dict | None:
     return None
 
 
+# Chỉ bắt block nightlife thật sự, tránh bắt nhầm câu cảnh báo "không đi đêm".
 def _has_nightlife_section(text: str) -> bool:
     for line in text.splitlines():
         cleaned = _strip_markdown_emphasis(line).strip()
@@ -205,6 +207,7 @@ def _has_nightlife_section(text: str) -> bool:
     return False
 
 
+# Guardrail sau LLM: kiểm tra block bắt buộc, dataset, nơi đóng cửa và ngân sách.
 def validate_itinerary_text(text: str, data: dict, preference: UserPreference) -> ValidationResult:
     normalized = _normalize(text)
     issues: list[ValidationIssue] = []

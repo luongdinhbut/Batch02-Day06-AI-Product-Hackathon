@@ -3,7 +3,7 @@ from __future__ import annotations
 from core.schemas import Budget, ExperienceStyle, FoodStyle, PlaceType, UserPreference
 
 
-# Tokens consumed by fallback_builder scoring. Keep these stable unless scorer logic changes.
+# Các token này được fallback_builder dùng để chấm điểm; chỉ đổi khi sửa scorer.
 FALLBACK_FOOD_STYLE = {
     FoodStyle.street_food: "Street food",
     FoodStyle.restaurant: "Restaurant",
@@ -31,6 +31,7 @@ FALLBACK_BUDGET = {
 }
 
 
+# Chuyển enum từ onboarding sang dict đơn giản cho fallback_builder.
 def to_fallback_planner_preferences(preference: UserPreference) -> dict:
     return {
         "food_style": FALLBACK_FOOD_STYLE.get(preference.food_style, "Anything"),
