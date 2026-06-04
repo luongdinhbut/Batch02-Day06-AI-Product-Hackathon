@@ -78,10 +78,7 @@ Chatbot hỏi 5 câu về sở thích ăn uống, loại điểm tham quan, phon
 ```txt
 Batch02-Day06-AI-Product-Hackathon/
 |-- README.md
-|-- AGENTS.md
 |-- hackathon-rules.md
-|-- spec.md
-|-- project_overview.md
 |-- spec/
 |   |-- README.md
 |   `-- spec.md
