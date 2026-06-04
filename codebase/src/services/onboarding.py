@@ -80,7 +80,7 @@ def parse_place_type(text: str) -> PlaceType | None:
     return None
 
 
-def parse_experience(text: str) -> tuple[ExperienceStyle, bool]:
+def parse_experience(text: str) -> tuple[ExperienceStyle, bool] | None:
     t = text.lower()
     if any(k in t for k in ["bar", "pub", "bia", "nightlife", "đêm", "uống"]):
         return ExperienceStyle.local, True
@@ -88,9 +88,9 @@ def parse_experience(text: str) -> tuple[ExperienceStyle, bool]:
         return ExperienceStyle.family, False
     if any(k in t for k in ["tourist", "tiện nghi", "dễ đi", "dễ tìm", "an toàn"]):
         return ExperienceStyle.tourist, False
-    if any(k in t for k in ["local", "địa phương", "người hà nội", "tránh tourist", "thật sự"]):
+    if any(k in t for k in ["local", "địa phương", "người", "tránh tourist", "thật sự", "bản địa", "ngóc ngách"]):
         return ExperienceStyle.local, False
-    return ExperienceStyle.local, False
+    return None
 
 
 def parse_budget(text: str) -> Budget | None:
@@ -146,7 +146,13 @@ def process_answer(preference: UserPreference, user_text: str) -> tuple[UserPref
         })
 
     elif step == OnboardingStep.experience:
-        exp, nightlife = parse_experience(user_text)
+        parsed = parse_experience(user_text)
+        if parsed is None or ambiguous:
+            return preference, (
+                "Bạn có thể nói rõ hơn chút không? Ví dụ bạn muốn trải nghiệm kiểu **local (bản địa)**, "
+                "**tourist-friendly (tiện nghi)**, hay **đi cùng gia đình trẻ em**?"
+            )
+        exp, nightlife = parsed
         preference = preference.model_copy(update={
             "experience": exp,
             "nightlife": nightlife,

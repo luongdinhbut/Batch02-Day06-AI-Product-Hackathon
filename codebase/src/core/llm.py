@@ -1,22 +1,29 @@
 from __future__ import annotations
 
 import os
-
-import google.generativeai as genai
 from dotenv import load_dotenv
 
 load_dotenv()
 
-_DEFAULT_MODEL = "gemini-2.0-flash"
+_DEFAULT_MODEL = "accounts/fireworks/models/deepseek-v4-pro"
 
-
-def build_model_with_system(system_instruction: str) -> genai.GenerativeModel:
-    api_key = os.getenv("GOOGLE_API_KEY")
+def get_fireworks_config() -> dict:
+    """Returns the API URL, headers, and model name for Fireworks AI."""
+    api_key = os.getenv("FIREWORKS_API_KEY")
     if not api_key:
-        raise EnvironmentError("GOOGLE_API_KEY is not set. Check your .env file.")
-    genai.configure(api_key=api_key)
-    model_name = os.getenv("GEMINI_MODEL", _DEFAULT_MODEL)
-    return genai.GenerativeModel(
-        model_name=model_name,
-        system_instruction=system_instruction,
-    )
+        raise EnvironmentError("FIREWORKS_API_KEY is not set. Check your .env file.")
+        
+    model_name = os.getenv("FIREWORKS_MODEL", _DEFAULT_MODEL)
+    
+    url = "https://api.fireworks.ai/inference/v1/chat/completions"
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+    
+    return {
+        "url": url,
+        "headers": headers,
+        "model": model_name
+    }
